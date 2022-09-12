@@ -71,6 +71,7 @@ class SFTPTarget(_Target):
         username=None,
         password=None,
         private_key=None,
+        hostkeys=None,
         timeout=None,
         extra_opts=None,
     ):
@@ -97,6 +98,7 @@ class SFTPTarget(_Target):
         self.username = username
         self.password = password
         self.private_key = private_key
+        self.hostkeys = hostkeys
         self.timeout = timeout
         #: dict: written to ftp target root folder before synchronization starts.
         #: set to False, if write failed. Default: None
@@ -139,7 +141,11 @@ class SFTPTarget(_Target):
         if verbose <= 3:
             logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
 
-        cnopts = pysftp.CnOpts()
+        if self.hostkeys is None:
+            cnopts = pysftp.CnOpts()
+        else:
+            cnopts = pysftp.CnOpts(hostkeys)
+            
         cnopts.log = self.get_option("ftp_debug", False)
         if not verify_host_keys:
             cnopts.hostkeys = None
@@ -160,7 +166,7 @@ class SFTPTarget(_Target):
                     self.host,
                     username=self.username,
                     password=self.password,
-                    private_key=private_key,
+                    private_key=self.private_key,
                     port=self.port,
                     cnopts=cnopts,
                 )
