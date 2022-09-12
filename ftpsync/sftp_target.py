@@ -144,8 +144,8 @@ class SFTPTarget(_Target):
         if self.hostkeys is None:
             cnopts = pysftp.CnOpts()
         else:
-            cnopts = pysftp.CnOpts(hostkeys)
-            
+            cnopts = pysftp.CnOpts(self.hostkeys)
+
         cnopts.log = self.get_option("ftp_debug", False)
         if not verify_host_keys:
             cnopts.hostkeys = None
