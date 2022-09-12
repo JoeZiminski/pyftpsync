@@ -70,6 +70,7 @@ class SFTPTarget(_Target):
         port=22,
         username=None,
         password=None,
+        private_key=None,
         timeout=None,
         extra_opts=None,
     ):
@@ -95,6 +96,7 @@ class SFTPTarget(_Target):
         self.port = port or 22
         self.username = username
         self.password = password
+        self.private_key = private_key
         self.timeout = timeout
         #: dict: written to ftp target root folder before synchronization starts.
         #: set to False, if write failed. Default: None
@@ -158,6 +160,7 @@ class SFTPTarget(_Target):
                     self.host,
                     username=self.username,
                     password=self.password,
+                    private_key=private_key,
                     port=self.port,
                     cnopts=cnopts,
                 )

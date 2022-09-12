@@ -61,6 +61,7 @@ def make_target(url, extra_opts=None):
             parts.port,
             username=parts.username,
             password=parts.password,
+            private_key=None,
             timeout=None,
             extra_opts=extra_opts,
         )
