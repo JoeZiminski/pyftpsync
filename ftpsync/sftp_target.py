@@ -144,7 +144,7 @@ class SFTPTarget(_Target):
         if not verify_host_keys:
             cnopts.hostkeys = None
 
-        if self.username is None or self.password is None:
+        if self.username is None or (self.password is None and self.private_key is None):
             creds = get_credentials_for_url(
                 self.host, options, force_user=self.username
             )
