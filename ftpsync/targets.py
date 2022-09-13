@@ -431,8 +431,11 @@ class FsTarget(_Target):
         root_dir = os.path.expanduser(root_dir)
         root_dir = os.path.abspath(root_dir)
         super().__init__(root_dir, extra_opts)
+
         if not os.path.isdir(root_dir):
-            raise ValueError("{} is not a directory.".format(root_dir))
+           os.mkdir(root_dir)
+#                raise ValueError("{} is not a directory.".format(root_dir))  # jz change 13/09/2022 TODO
+
         self.support_set_time = True
 
     def __str__(self):
