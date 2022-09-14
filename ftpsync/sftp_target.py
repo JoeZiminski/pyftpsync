@@ -224,7 +224,7 @@ class SFTPTarget(_Target):
 
                 write_error(
                     f"Could not change remote directory to {self.root_dir!r} ({e!r}). "
-                    f"`--create-folder` was passed: creating {subfolder!r} within {parent!r}..."
+                    f"`--create-folder` was passed: creating {self.root_dir}" # {subfolder!r} within {parent!r}..."
                 )
 
                 self.mkdir_p(self.root_dir)  # TODO: jz 14/09/2022
