@@ -218,7 +218,7 @@ class SFTPTarget(_Target):
                     msg = (
                         f"Could not change remote directory to {self.root_dir!r} ({e!r}). "
                         "This may be due to missing permissions or because the folder does not exist. "
-                        f"Pass `--create-folder` if you want to create {subfolder!r} within {parent!r}."
+                        f"Pass `--create-folder` if you want to create {self.root_dir}"  # {subfolder!r} within {parent!r}."
                     )
                     raise CliSilentRuntimeError(msg, min_verbosity=4)
 
