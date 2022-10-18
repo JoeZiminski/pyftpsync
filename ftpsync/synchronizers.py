@@ -1053,7 +1053,7 @@ class UploadSynchronizer(BiDirSynchronizer):
             assert pair.operation == "copy_remote"
             pair.override_operation("delete_remote", "restore")
 
-        if force:
+        if force == "all":
             if is_file and classification == ("new", "new"):
                 pair.override_operation("copy_local", "force")
             elif is_file and classification == ("modified", "modified"):
@@ -1063,6 +1063,10 @@ class UploadSynchronizer(BiDirSynchronizer):
             elif is_file and classification == ("existing", "existing"):
                 pair.override_operation("copy_local", "force")
             elif classification == ("unmodified", "deleted"):
+                pair.override_operation("copy_local", "restore")
+
+        elif force == "restore":
+            if classification == ("unmodified", "deleted"):
                 pair.override_operation("copy_local", "restore")
 
         return True

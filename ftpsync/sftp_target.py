@@ -70,6 +70,8 @@ class SFTPTarget(_Target):
         port=22,
         username=None,
         password=None,
+        private_key=None,
+        hostkeys=None,
         timeout=None,
         extra_opts=None,
     ):
@@ -95,6 +97,8 @@ class SFTPTarget(_Target):
         self.port = port or 22
         self.username = username
         self.password = password
+        self.private_key = private_key
+        self.hostkeys = hostkeys
         self.timeout = timeout
         #: dict: written to ftp target root folder before synchronization starts.
         #: set to False, if write failed. Default: None
@@ -137,12 +141,16 @@ class SFTPTarget(_Target):
         if verbose <= 3:
             logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
 
-        cnopts = pysftp.CnOpts()
+        if self.hostkeys is None:
+            cnopts = pysftp.CnOpts()
+        else:
+            cnopts = pysftp.CnOpts(self.hostkeys)
+
         cnopts.log = self.get_option("ftp_debug", False)
         if not verify_host_keys:
             cnopts.hostkeys = None
 
-        if self.username is None or self.password is None:
+        if self.username is None or (self.password is None and self.private_key is None):
             creds = get_credentials_for_url(
                 self.host, options, force_user=self.username
             )
@@ -158,6 +166,7 @@ class SFTPTarget(_Target):
                     self.host,
                     username=self.username,
                     password=self.password,
+                    private_key=self.private_key,
                     port=self.port,
                     cnopts=cnopts,
                 )
@@ -203,22 +212,24 @@ class SFTPTarget(_Target):
                     f"Could not change local directory to {self.root_dir} ({e}): missing permissions?"
                 )
             else:
-                parent = os.path.dirname(self.root_dir)
-                subfolder = os.path.basename(self.root_dir)
+                # parent = os.path.dirname(self.root_dir)
+                # subfolder = os.path.basename(self.root_dir)
                 if not self.get_option("create_folder", False):
                     msg = (
                         f"Could not change remote directory to {self.root_dir!r} ({e!r}). "
                         "This may be due to missing permissions or because the folder does not exist. "
-                        f"Pass `--create-folder` if you want to create {subfolder!r} within {parent!r}."
+                        f"Pass `--create-folder` if you want to create {self.root_dir}"  # {subfolder!r} within {parent!r}."
                     )
                     raise CliSilentRuntimeError(msg, min_verbosity=4)
 
                 write_error(
                     f"Could not change remote directory to {self.root_dir!r} ({e!r}). "
-                    f"`--create-folder` was passed: creating {subfolder!r} within {parent!r}..."
+                    f"`--create-folder` was passed: creating {self.root_dir}" # {subfolder!r} within {parent!r}..."
                 )
-                self.sftp.cwd(parent)
-                self.mkdir(subfolder)
+
+                self.mkdir_p(self.root_dir)  # TODO: jz 14/09/2022
+                # self.sftp.cwd(parent)
+                # self.mkdir(subfolder)
                 # Must work now:
                 self.sftp.cwd(self.root_dir)
 
@@ -337,6 +348,37 @@ class SFTPTarget(_Target):
         assert is_native(dir_name)
         self.check_write(dir_name)
         self.sftp.mkdir(dir_name)
+
+    def mkdir_p(self, remote, is_dir=True):
+        """
+        emulates mkdir_p if required.
+        sftp - is a valid sftp object
+        remote - remote path to create.
+
+        from https://stackoverflow.com/questions/14819681/upload-files-using-sftp-in-python-but-create-directories-if-path-doesnt-exist
+
+        TODO: jz 14092022
+        """
+        dirs_ = []
+        if is_dir:
+            dir_ = remote
+        else:
+            dir_, basename = os.path.split(remote)
+        while len(dir_) > 1:
+            dirs_.append(dir_)
+            dir_, _ = os.path.split(dir_)
+
+        if len(dir_) == 1 and not dir_.startswith("/"):
+            dirs_.append(dir_)  # For a remote path like y/x.txt
+
+        while len(dirs_):
+            dir_ = dirs_.pop()
+            try:
+                self.sftp.stat(dir_)
+            except:
+                print
+                "making ... dir", dir_
+                self.sftp.mkdir(dir_)
 
     def _rmdir_impl(self, dir_name, keep_root_folder=False, predicate=None):
         # FTP does not support deletion of non-empty directories.
